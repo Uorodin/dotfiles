@@ -1,0 +1,12 @@
+brew "git"
+brew "neovim"
+brew "tmux"
+brew "ripgrep"
+brew "fd"
+brew "fzf"
+brew "lazygit"
+brew "node"
+brew "python"
+
+cask "ghostty"
+cask "codex"

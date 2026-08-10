@@ -1,0 +1,2 @@
+-- LazyVim provides the project, search, explorer, and LSP keymaps.
+-- Pane navigation is supplied by vim-tmux-navigator in lua/plugins/editor.lua.
