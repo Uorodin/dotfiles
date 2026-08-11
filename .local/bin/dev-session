@@ -8,7 +8,7 @@ if tmux has-session -t "$session_name" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$session_name" -c "$project_directory" "nvim ."
-tmux split-window -h -t "$session_name:1" -c "$project_directory" "codex"
+tmux split-window -h -p 33 -t "$session_name:1" -c "$project_directory" "codex"
 tmux select-pane -t "$session_name:1.1"
 
 exec tmux attach-session -t "$session_name"

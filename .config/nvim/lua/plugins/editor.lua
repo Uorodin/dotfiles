@@ -54,7 +54,15 @@ return {
         jsonls = {},
         lua_ls = {},
         marksman = {},
-        basedpyright = {},
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                typeCheckingMode = "off",
+              },
+            },
+          },
+        },
         vtsls = {},
         yamlls = {},
       },
