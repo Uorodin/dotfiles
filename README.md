@@ -1,6 +1,6 @@
 # Mac development dotfiles
 
-This repository recreates a Ghostty, tmux, Neovim, LazyVim, and Codex CLI development environment on macOS.
+This repository recreates a Ghostty, tmux, Herdr, Neovim, LazyVim, and Codex CLI development environment on macOS.
 
 ## Install
 
@@ -8,11 +8,11 @@ This repository recreates a Ghostty, tmux, Neovim, LazyVim, and Codex CLI develo
 2. Install Homebrew from <https://brew.sh> if it is not already installed.
 3. Run `~/dotfiles/bootstrap.sh`.
 4. Open a new Ghostty window.
-5. Change to a project directory and run `dev-session`.
+5. Change to a project directory and run `dev-session` or `dev-herdr`.
 
 The bootstrap script installs dependencies with Homebrew, creates timestamped backups of existing targets, links the tracked configs into place, installs LazyVim tooling, and verifies the result.
 
-## Layout
+## tmux layout
 
 `dev-session` starts a tmux session named after the current directory:
 
@@ -25,6 +25,24 @@ Ghostty
 
 Pass a different session name when needed: `dev-session my-session`.
 
+## Herdr layout
+
+`dev-herdr` creates a Herdr workspace with the same project directory in both panes:
+
+```text
+Herdr workspace
+├── left pane: Codex CLI
+└── right pane: Neovim with LazyVim
+```
+
+Use `dev-herdr` outside Herdr to start or attach to the Herdr server in the current directory. Run it inside Herdr with no arguments to choose a workspace directory with `fzf`, or pass a directory explicitly:
+
+```sh
+dev-herdr
+dev-herdr --select ~/Documents/Projects
+dev-herdr ~/Documents/Projects/my-project
+```
+
 ## Important keybindings
 
 | Keys | Action |
@@ -36,6 +54,8 @@ Pass a different session name when needed: `dev-session my-session`.
 | `gd`, `K`, `[d`, `]d` | Definition, documentation, and diagnostics |
 | `Ctrl-b \|` and `Ctrl-b -` | Split tmux horizontally and vertically |
 | `Ctrl-b H/J/K/L` | Resize the active tmux pane |
+
+Herdr uses the same `Ctrl-b` prefix for pane navigation and splitting. `Ctrl-b v` splits right, `Ctrl-b -` splits down, and `Ctrl-b q` detaches while keeping workspaces running.
 
 ## Updating
 

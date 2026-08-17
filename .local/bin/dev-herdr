@@ -1,0 +1,180 @@
+#!/bin/sh
+
+set -eu
+
+print_usage() {
+  cat <<'EOF'
+Usage: dev-herdr [--select [ROOT]] [DIRECTORY]
+
+Create a Herdr workspace with Codex in the left pane and Neovim in the right pane.
+
+With no arguments, dev-herdr uses the current directory outside Herdr. When run
+inside Herdr, it opens a directory picker rooted at the current directory.
+EOF
+}
+
+fail() {
+  printf 'dev-herdr: %s\n' "$1" >&2
+  exit 1
+}
+
+canonicalize_directory() {
+  directory_path=$1
+
+  if ! canonical_directory=$(CDPATH= cd -- "$directory_path" 2>/dev/null && pwd -P); then
+    return 1
+  fi
+
+  printf '%s\n' "$canonical_directory"
+}
+
+select_directory() {
+  selection_root=$1
+
+  command -v fd >/dev/null 2>&1 || fail 'fd is required for directory selection'
+  command -v fzf >/dev/null 2>&1 || fail 'fzf is required for directory selection'
+
+  if ! directory_candidates=$(
+    {
+      printf '%s\n' "$selection_root"
+      fd \
+        --absolute-path \
+        --type directory \
+        --hidden \
+        --follow \
+        --exclude .git \
+        --exclude node_modules \
+        . "$selection_root" 2>/dev/null || true
+    } | sort -u
+  ); then
+    fail "could not scan directories below $selection_root"
+  fi
+
+  if ! selected_directory=$(printf '%s\n' "$directory_candidates" | fzf \
+    --height=60% \
+    --layout=reverse \
+    --border \
+    --prompt='Workspace directory> ' \
+    --header='Select a workspace directory'); then
+    fail 'directory selection cancelled'
+  fi
+
+  [ -n "$selected_directory" ] || fail 'no workspace directory was selected'
+  printf '%s\n' "$selected_directory"
+}
+
+command -v herdr >/dev/null 2>&1 || fail 'herdr is required; install it with Homebrew'
+command -v jq >/dev/null 2>&1 || fail 'jq is required to read Herdr API responses'
+
+case "${1:-}" in
+  --help|-h)
+    [ "$#" -eq 1 ] || fail 'help does not accept additional arguments'
+    print_usage
+    exit 0
+    ;;
+  --select)
+    [ "$#" -le 2 ] || fail 'usage: dev-herdr [--select [ROOT]] [DIRECTORY]'
+    requested_selection_root=${2:-$PWD}
+    if ! selection_root=$(canonicalize_directory "$requested_selection_root"); then
+      fail "directory does not exist: $requested_selection_root"
+    fi
+    workspace_directory=$(select_directory "$selection_root")
+    ;;
+  --*)
+    fail "unknown option: $1"
+    ;;
+  '')
+    if [ "${HERDR_ENV:-}" = 1 ]; then
+      workspace_directory=$(select_directory "$PWD")
+    else
+      workspace_directory=$PWD
+    fi
+    ;;
+  *)
+    [ "$#" -eq 1 ] || fail 'usage: dev-herdr [--select [ROOT]] [DIRECTORY]'
+    workspace_directory=$1
+    ;;
+esac
+
+requested_workspace_directory=$workspace_directory
+if ! workspace_directory=$(canonicalize_directory "$requested_workspace_directory"); then
+  fail "directory does not exist: $requested_workspace_directory"
+fi
+workspace_label=${workspace_directory##*/}
+[ -n "$workspace_label" ] || workspace_label=$workspace_directory
+
+server_pid=''
+workspace_id=''
+
+cleanup_failed_setup() {
+  if [ -n "$workspace_id" ]; then
+    herdr workspace close "$workspace_id" >/dev/null 2>&1 || true
+  fi
+
+  if [ -n "$server_pid" ]; then
+    kill "$server_pid" >/dev/null 2>&1 || true
+    wait "$server_pid" >/dev/null 2>&1 || true
+  fi
+}
+
+trap cleanup_failed_setup EXIT HUP INT TERM
+
+if ! herdr workspace list >/dev/null 2>&1; then
+  [ "${HERDR_ENV:-}" != 1 ] || fail 'the Herdr server is unavailable'
+
+  nohup herdr server >/dev/null 2>&1 &
+  server_pid=$!
+  server_attempts=0
+
+  while ! herdr workspace list >/dev/null 2>&1; do
+    if ! kill -0 "$server_pid" >/dev/null 2>&1; then
+      fail 'the Herdr server exited before becoming ready'
+    fi
+
+    server_attempts=$((server_attempts + 1))
+    [ "$server_attempts" -lt 100 ] || fail 'timed out waiting for the Herdr server'
+    sleep 0.1
+  done
+fi
+
+if ! created_workspace=$(herdr workspace create \
+  --cwd "$workspace_directory" \
+  --label "$workspace_label" \
+  --focus); then
+  fail "could not create a Herdr workspace in $workspace_directory"
+fi
+
+if ! workspace_id=$(printf '%s\n' "$created_workspace" | jq -er '.result.workspace.workspace_id'); then
+  fail 'Herdr returned an invalid workspace identifier'
+fi
+
+if ! codex_pane_id=$(printf '%s\n' "$created_workspace" | jq -er '.result.root_pane.pane_id'); then
+  fail 'Herdr returned an invalid root pane identifier'
+fi
+
+if ! split_workspace=$(herdr pane split "$codex_pane_id" \
+  --direction right \
+  --ratio 0.67 \
+  --cwd "$workspace_directory" \
+  --no-focus); then
+  fail 'could not split the Herdr workspace'
+fi
+
+if ! nvim_pane_id=$(printf '%s\n' "$split_workspace" | jq -er '.result.pane.pane_id'); then
+  fail 'Herdr returned an invalid split pane identifier'
+fi
+
+herdr pane run "$codex_pane_id" codex || fail 'could not start Codex in the left pane'
+herdr pane run "$nvim_pane_id" nvim . || fail 'could not start Neovim in the right pane'
+
+printf 'Created Herdr workspace %s in %s\n' "$workspace_label" "$workspace_directory"
+
+workspace_id=''
+server_pid=''
+trap - EXIT HUP INT TERM
+
+if [ "${HERDR_ENV:-}" = 1 ]; then
+  exit 0
+fi
+
+exec herdr
