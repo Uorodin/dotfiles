@@ -6,7 +6,8 @@ print_usage() {
   cat <<'EOF'
 Usage: dev-herdr [--select [ROOT]] [DIRECTORY]
 
-Create a Herdr workspace with Neovim in the left pane and Codex in the right pane.
+Create a Herdr workspace with Neovim on the left, Codex in the upper-right pane,
+and an interactive terminal in the lower-right pane.
 
 With no arguments, dev-herdr uses the current directory outside Herdr. When run
 inside Herdr, it opens a directory picker rooted at the current directory.
@@ -164,8 +165,21 @@ if ! codex_pane_id=$(printf '%s\n' "$split_workspace" | jq -er '.result.pane.pan
   fail 'Herdr returned an invalid split pane identifier'
 fi
 
+if ! terminal_split=$(herdr pane split "$codex_pane_id" \
+  --direction down \
+  --ratio 0.5 \
+  --cwd "$workspace_directory" \
+  --no-focus); then
+  fail 'could not create the terminal pane'
+fi
+
+if ! terminal_pane_id=$(printf '%s\n' "$terminal_split" | jq -er '.result.pane.pane_id'); then
+  fail 'Herdr returned an invalid terminal pane identifier'
+fi
+
+herdr pane rename "$terminal_pane_id" terminal || fail 'could not label the terminal pane'
 herdr pane run "$nvim_pane_id" nvim . || fail 'could not start Neovim in the left pane'
-herdr pane run "$codex_pane_id" codex || fail 'could not start Codex in the right pane'
+herdr pane run "$codex_pane_id" codex || fail 'could not start Codex in the upper-right pane'
 
 printf 'Created Herdr workspace %s in %s\n' "$workspace_label" "$workspace_directory"
 

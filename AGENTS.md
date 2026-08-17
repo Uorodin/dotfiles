@@ -11,7 +11,9 @@ Ghostty
 │   └── right pane: Codex CLI
 └── Herdr via `dev-herdr`
     ├── left pane: Neovim with LazyVim
-    └── right pane: Codex CLI
+    └── right column
+        ├── upper pane: Codex CLI
+        └── lower pane: terminal
 ```
 
 The expected editor features are syntax highlighting, absolute and relative line numbers, Git gutter indicators, LSP diagnostics, autocomplete, file exploration, fuzzy file search, project-wide text search, a status line, and a dark muted theme. Supported languages include TypeScript, JavaScript, Python, JSON, YAML, Markdown, Lua, shell, HTML, and CSS.
