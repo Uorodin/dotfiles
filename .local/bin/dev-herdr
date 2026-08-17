@@ -167,7 +167,7 @@ fi
 
 if ! terminal_split=$(herdr pane split "$codex_pane_id" \
   --direction down \
-  --ratio 0.5 \
+  --ratio 0.66071427 \
   --cwd "$workspace_directory" \
   --no-focus); then
   fail 'could not create the terminal pane'
