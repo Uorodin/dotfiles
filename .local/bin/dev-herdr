@@ -7,7 +7,8 @@ print_usage() {
 Usage: dev-herdr [--select [ROOT]] [DIRECTORY]
 
 Create a Herdr workspace with Neovim on the left, Codex in the upper-right pane,
-and an interactive terminal in the lower-right pane.
+and an interactive terminal in the lower-right pane on tab 1. Add a terminal-only
+tab 2 without focusing it.
 
 With no arguments, dev-herdr uses the current directory outside Herdr. When run
 inside Herdr, it opens a directory picker rooted at the current directory.
@@ -190,6 +191,17 @@ fi
 herdr pane rename "$terminal_pane_id" terminal || fail 'could not label the terminal pane'
 herdr pane run "$nvim_pane_id" nvim . || fail 'could not start Neovim in the left pane'
 herdr pane run "$agent_pane_id" "$agent_command" || fail "could not start $agent_name in the upper-right pane"
+
+if ! terminal_tab=$(herdr tab create \
+  --workspace "$workspace_id" \
+  --cwd "$workspace_directory" \
+  --no-focus); then
+  fail 'could not create the terminal-only second tab'
+fi
+
+if ! printf '%s\n' "$terminal_tab" | jq -e '.result.tab.tab_id' >/dev/null; then
+  fail 'Herdr returned an invalid terminal-only tab identifier'
+fi
 
 printf 'Created Herdr workspace %s in %s\n' "$workspace_label" "$workspace_directory"
 

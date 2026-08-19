@@ -26,8 +26,8 @@ if [ "${1:-}" = '--help' ] || [ "${1:-}" = '-h' ]; then
 Usage: add-herdr [-codex|-claude] [--select [ROOT]] [DIRECTORY]
 
 Create a Herdr workspace with Neovim on the left, $agent_name in the upper-right pane,
-and an interactive terminal in the lower-right pane without attaching this
-terminal to Herdr.
+and an interactive terminal in the lower-right pane on tab 1. Add a terminal-only
+tab 2 without attaching this terminal to Herdr.
 
 With no arguments, add-herdr uses the current directory outside Herdr. When run
 inside Herdr, it opens a directory picker rooted at the current directory.

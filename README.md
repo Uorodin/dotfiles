@@ -31,10 +31,13 @@ Pass a different session name when needed: `dev-session my-session`.
 
 ```text
 Herdr workspace
-├── left pane: Neovim with LazyVim
-└── right column
-    ├── upper pane: Codex CLI
-    └── lower pane: terminal
+├── tab 1
+│   ├── left pane: Neovim with LazyVim
+│   └── right column
+│       ├── upper pane: Codex CLI
+│       └── lower pane: terminal
+└── tab 2
+    └── terminal
 ```
 
 Use `dev-herdr` outside Herdr to start or attach to the Herdr server in the current directory. Run it inside Herdr with no arguments to choose a workspace directory with `fzf`, or pass a directory explicitly:
