@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -eu
+
+agent_command=codex
+agent_name=Codex
+
+case "${1:-}" in
+  -codex)
+    shift
+    ;;
+  -claude)
+    agent_command=claude
+    agent_name=Claude
+    shift
+    ;;
+esac
+
+if [ "${1:-}" = '--help' ] || [ "${1:-}" = '-h' ]; then
+  [ "$#" -eq 1 ] || {
+    printf '%s\n' 'add-herdr: help does not accept additional arguments' >&2
+    exit 1
+  }
+
+  cat <<EOF
+Usage: add-herdr [-codex|-claude] [--select [ROOT]] [DIRECTORY]
+
+Create a Herdr workspace with Neovim on the left, $agent_name in the upper-right pane,
+and an interactive terminal in the lower-right pane without attaching this
+terminal to Herdr.
+
+With no arguments, add-herdr uses the current directory outside Herdr. When run
+inside Herdr, it opens a directory picker rooted at the current directory.
+EOF
+  exit 0
+fi
+
+export DEV_HERDR_NO_ATTACH=1
+export DEV_HERDR_AGENT_COMMAND="$agent_command"
+export DEV_HERDR_AGENT_NAME="$agent_name"
+exec dev-herdr "$@"

@@ -67,6 +67,16 @@ select_directory() {
 command -v herdr >/dev/null 2>&1 || fail 'herdr is required; install it with Homebrew'
 command -v jq >/dev/null 2>&1 || fail 'jq is required to read Herdr API responses'
 
+agent_command=${DEV_HERDR_AGENT_COMMAND:-codex}
+agent_name=${DEV_HERDR_AGENT_NAME:-Codex}
+case "$agent_command" in
+  codex|claude)
+    ;;
+  *)
+    fail "unsupported agent command: $agent_command"
+    ;;
+esac
+
 case "${1:-}" in
   --help|-h)
     [ "$#" -eq 1 ] || fail 'help does not accept additional arguments'
@@ -161,11 +171,11 @@ if ! split_workspace=$(herdr pane split "$nvim_pane_id" \
   fail 'could not split the Herdr workspace'
 fi
 
-if ! codex_pane_id=$(printf '%s\n' "$split_workspace" | jq -er '.result.pane.pane_id'); then
+if ! agent_pane_id=$(printf '%s\n' "$split_workspace" | jq -er '.result.pane.pane_id'); then
   fail 'Herdr returned an invalid split pane identifier'
 fi
 
-if ! terminal_split=$(herdr pane split "$codex_pane_id" \
+if ! terminal_split=$(herdr pane split "$agent_pane_id" \
   --direction down \
   --ratio 0.66071427 \
   --cwd "$workspace_directory" \
@@ -179,7 +189,7 @@ fi
 
 herdr pane rename "$terminal_pane_id" terminal || fail 'could not label the terminal pane'
 herdr pane run "$nvim_pane_id" nvim . || fail 'could not start Neovim in the left pane'
-herdr pane run "$codex_pane_id" codex || fail 'could not start Codex in the upper-right pane'
+herdr pane run "$agent_pane_id" "$agent_command" || fail "could not start $agent_name in the upper-right pane"
 
 printf 'Created Herdr workspace %s in %s\n' "$workspace_label" "$workspace_directory"
 
@@ -187,7 +197,7 @@ workspace_id=''
 server_pid=''
 trap - EXIT HUP INT TERM
 
-if [ "${HERDR_ENV:-}" = 1 ]; then
+if [ "${HERDR_ENV:-}" = 1 ] || [ "${DEV_HERDR_NO_ATTACH:-}" = 1 ]; then
   exit 0
 fi
 

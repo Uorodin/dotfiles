@@ -38,10 +38,14 @@ back_up_and_link "$repository_directory/.config/nvim" "$HOME/.config/nvim"
 back_up_and_link "$repository_directory/.tmux.conf" "$HOME/.tmux.conf"
 back_up_and_link "$repository_directory/.local/bin/dev-session" "$HOME/.local/bin/dev-session"
 back_up_and_link "$repository_directory/.local/bin/dev-herdr" "$HOME/.local/bin/dev-herdr"
+back_up_and_link "$repository_directory/.local/bin/add-herdr" "$HOME/.local/bin/add-herdr"
 back_up_and_link "$repository_directory/ghostty/config.ghostty" "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
 back_up_and_link "$repository_directory/shell/dev-environment.zsh" "$HOME/.config/shell/dev-environment.zsh"
 
-chmod 755 "$repository_directory/.local/bin/dev-session" "$repository_directory/.local/bin/dev-herdr"
+chmod 755 \
+  "$repository_directory/.local/bin/dev-session" \
+  "$repository_directory/.local/bin/dev-herdr" \
+  "$repository_directory/.local/bin/add-herdr"
 
 shell_source_line='source "$HOME/.config/shell/dev-environment.zsh"'
 touch "$HOME/.zshrc"
@@ -70,5 +74,6 @@ tmux -L dotfiles-config-test kill-server
 ghostty +show-config >/dev/null
 sh -n "$HOME/.local/bin/dev-session"
 sh -n "$HOME/.local/bin/dev-herdr"
+sh -n "$HOME/.local/bin/add-herdr"
 
-printf '%s\n' 'Environment installed and verified. Open a new Ghostty window and run: dev-session or dev-herdr'
+printf '%s\n' 'Environment installed and verified. Open a new Ghostty window and run: dev-session, dev-herdr, or add-herdr'

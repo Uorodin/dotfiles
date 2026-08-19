@@ -8,7 +8,7 @@ This repository recreates a Ghostty, tmux, Herdr, Neovim, LazyVim, and Codex CLI
 2. Install Homebrew from <https://brew.sh> if it is not already installed.
 3. Run `~/dotfiles/bootstrap.sh`.
 4. Open a new Ghostty window.
-5. Change to a project directory and run `dev-session` or `dev-herdr`.
+5. Change to a project directory and run `dev-session`, `dev-herdr`, or `add-herdr`.
 
 The bootstrap script installs dependencies with Homebrew, creates timestamped backups of existing targets, links the tracked configs into place, installs LazyVim tooling, and verifies the result.
 
@@ -43,6 +43,14 @@ Use `dev-herdr` outside Herdr to start or attach to the Herdr server in the curr
 dev-herdr
 dev-herdr --select ~/Documents/Projects
 dev-herdr ~/Documents/Projects/my-project
+```
+
+Use `add-herdr` with the same arguments to create a workspace without attaching the current terminal to Herdr. It opens Codex by default, or Claude when passed `-claude`. This is useful for adding several workspaces from one terminal:
+
+```sh
+add-herdr ~/Documents/Projects/first-project
+add-herdr -claude ~/Documents/Projects/second-project
+add-herdr -codex ~/Documents/Projects/third-project
 ```
 
 ## Important keybindings
